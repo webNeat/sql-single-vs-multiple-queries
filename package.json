@@ -1,0 +1,14 @@
+{
+  "name": "joins-perf",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "generate-seed": "tsx src/seed/run.ts"
+  },
+  "dependencies": {
+    "@types/node": "^20.2.5",
+    "prettier": "^2.8.8",
+    "tsx": "^3.12.7"
+  }
+}
