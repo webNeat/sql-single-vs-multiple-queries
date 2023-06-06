@@ -1,3 +1,5 @@
 node_modules
 docker/data
-docker/seed/*.sql
+docker/seed.sql
+single.json
+multiple.json

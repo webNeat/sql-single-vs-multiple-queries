@@ -1,15 +1,17 @@
-# SQL Joins vs multiple queries performance comparaison
+# Drizzle single vs multiple queries performance comparaison
 
-I was watching [this video](https://www.youtube.com/watch?v=_SLxGYzv6jo) of Theo about Drizzle ORM, and the following sentence (from [this article](https://medium.com/@aleksandrblokh/best-typescript-orm-just-got-better-5a33688b8d2e)) catched my attention:
+This sentence from Drizzle documentation was surprising to me:
 
 > Regardless of how many nested relations you query - Drizzle will always make exactly one SQL query to the database, it makes it extremely explicit and easy to tune performance with indexes.
 
-In my mind, using exactly one SQL query will not be performant in all cases. In fact, I have seen some cases where doing multiple joins hurts the performance **a lot**. But Theo said "this is very very performant", so maybe I am missing something?! maybe Drizzle is doing something I don't know ...
+In my mind, using exactly one SQL query will not be performant in all cases. In fact, I have seen some cases where doing multiple joins hurt the performance **a lot**. Am I missing something?! maybe Drizzle is doing something I don't know ...
 
-## A simple blog database
+So I created this benchmark to experiment with Drizzle a bit and see what I am understanding wrong.
 
-Let's make a database and do some benchmarks to try to understand what's going on. I will use Postgres for this and start with a simple blog database:
+## The benchmark
 
+- I used Postgres inside a docker container
+- I created a simple blog database
 ```
 users
   id int primary key auto-increment
@@ -28,25 +30,70 @@ comments
   user_id int foreign key (users.id)
   post_id int foreign key (posts.id)
   content text
-
-tags
-  id primary key auto-increment
-  name varchar(255)
-
-post_tags
-  id primary key auto-increment
-  post_id int foreign key (posts.id)
-  tag_id int foreign key (tags.id)
 ```
+- I inserted a lot of data into the database: 100k users, 500k posts and 5M comments
+- I wrote two scripts to fetch the same data: **a number of comments with their author name, post title and post author name**. The count of comments to fetch is given as a parameter to the script.
+  - The first script `src/single.ts` uses Drizzle `db.query...` to fetch all the data using a single query.
+  - The second script `src/multiple.ts` uses Drizzle `db.query...` three times to fetch data from the 3 tables and combine them manually.
+  Both scripts give exactly the same data!
 
-### Seeding the database
+## The results
 
-Before running any queries, I need to fill the database with a lot of data. my target is to have:
+Here are the results of running the scripts with different counts multiple times and taking an approx average (I didn't have to be precise because the difference is huge!)
 
-- 100 000 users
-- 1 000 000 posts
-- 10 000 000 comments (10 comments per post)
-- 50 tags
-- 5 000 000 post_tags (5 tags per post)
+<table>
+  <thead>
+    <tr>
+      <th>count of comments</th>
+      <th>single query</th>
+      <th>multiple queries + data combinaison</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>1900 ms</td>
+      <td>27 ms</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>1900 ms</td>
+      <td>27 ms</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>3250 ms</td>
+      <td>30 ms</td>
+    </tr>
+    <tr>
+      <td>1000</td>
+      <td>16_000 ms</td>
+      <td>55 ms</td>
+    </tr>
+    <tr>
+      <td>5000</td>
+      <td>71_000 ms</td>
+      <td>150 ms</td>
+    </tr>
+  </tbody>
+</table>
 
+## Run the benchmark yourself
 
+**Requirements:** You will need to have [docker-compose](https://docs.docker.com/compose/) and Nodejs installed on your system.
+
+Then follow these steps:
+
+- Clone this repo
+- Install dependencies `yarn install`
+- Generate the SQL file that inserts data into the database `yarn generate-seed` (You can change the amount of data to generate by changing the `counts` variable in `src/seed/generators.ts`)
+- Start the database `yarn start-db` (This will take some time to insert all the data, it took about 5mins on my system. Wait untill you see `database system is ready to accept connections`)
+- Keep the database running, open a new terminal to run the scripts
+- Run the single query script with `yarn tsx src/single.ts <count>` (example: `yarn tsx src/single.ts 100`)
+- Run the multiple queries script with `yarn tsx src/multiple.ts <count>` (example: `yarn tsx src/multiple.ts 100`)
+
+The two scripts write the loaded data into the files `single.json` and `multiple.json` respectively, so you can inspect the files and check that they fetch the same data.
+
+## Got a feedback?
+
+Feel free to open an issue or submit a PR, I created this repo out of curiosity and my goal is to learn new things. if you see that I am doing something wrong, please let me know!

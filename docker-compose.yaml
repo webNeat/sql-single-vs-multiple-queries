@@ -1,30 +1,15 @@
 version: '3'
 services:
-  app:
-    image: node
-    volumes:
-      - .:/app
-    working_dir: /app
-    environment:
-      DB_HOST: db
-      DB_USERNAME: user
-      DB_PASSWORD: pass
-      DB_DATABASE: benchmark
-    depends_on:
-      - db
   db:
     image: postgres
-    # command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: benchmark
+    ports:
+      - '5432:5432'
     volumes:
-      - ./docker/data:/var/lib/postgresql/data
       - ./docker/postgres.conf:/etc/postgresql/postgresql.conf
       - ./docker/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
-      - ./docker/seed/tags.sql:/docker-entrypoint-initdb.d/2-tags.sql
-      - ./docker/seed/users.sql:/docker-entrypoint-initdb.d/3-users.sql
-      - ./docker/seed/posts.sql:/docker-entrypoint-initdb.d/4-posts.sql
-      - ./docker/seed/post_tags.sql:/docker-entrypoint-initdb.d/5-post_tags.sql
-      - ./docker/seed/comments.sql:/docker-entrypoint-initdb.d/6-comments.sql
+      - ./docker/seed.sql:/docker-entrypoint-initdb.d/2-seed.sql

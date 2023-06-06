@@ -21,16 +21,3 @@ CREATE TABLE comments (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (post_id) REFERENCES posts(id)
 );
-
-CREATE TABLE tags (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255)
-);
-
-CREATE TABLE post_tags (
-    id SERIAL PRIMARY KEY,
-    post_id INT,
-    tag_id INT,
-    FOREIGN KEY (post_id) REFERENCES posts(id),
-    FOREIGN KEY (tag_id) REFERENCES tags(id)
-);

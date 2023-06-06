@@ -4,11 +4,18 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
+    "start-db": "docker-compose up",
+    "stop-db": "docker-compose down -v",
     "generate-seed": "tsx src/seed/run.ts"
   },
   "dependencies": {
     "@types/node": "^20.2.5",
+    "drizzle-orm": "^0.26.5",
+    "postgres": "^3.3.5",
     "prettier": "^2.8.8",
     "tsx": "^3.12.7"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.18.1"
   }
 }
