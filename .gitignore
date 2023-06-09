@@ -1,5 +1,7 @@
+.idea
 node_modules
 docker/data
 docker/seed.sql
 single.json
 multiple.json
+orchid.json
