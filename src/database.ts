@@ -54,4 +54,5 @@ const commentsRelations = relations(comments, ({ one, many }) => ({
 
 export const db = drizzle(sql, {
   schema: { users, usersRelations, posts, postsRelations, comments, commentsRelations },
+  logger: false,
 })
