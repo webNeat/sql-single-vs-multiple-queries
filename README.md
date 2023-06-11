@@ -78,7 +78,7 @@ Here are the results of running the scripts with different counts multiple times
   </tbody>
 </table>
 
-## The results compared to Orchid ORM
+## The results compared to Orchid ORM (by [@romeerez](https://github.com/romeerez))
 
 Here are the results compared to [Orchid ORM](https://github.com/romeerez/orchid-orm).
 
@@ -119,7 +119,7 @@ Here are the results compared to [Orchid ORM](https://github.com/romeerez/orchid
   </tbody>
 </table>
 
-## The Why
+## The Why (by [@romeerez](https://github.com/romeerez))
 
 Each variant is spending time executing the query, and then on JS side processing results.
 
