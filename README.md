@@ -419,10 +419,21 @@ Then follow these steps:
 - Install dependencies `yarn install`
 - Generate the SQL file that inserts data into the database `yarn generate-seed` (You can change the amount of data to generate by changing the `counts` variable in `src/seed/generators.ts`)
 - Start the database `yarn start-db` (This will take some time to insert all the data, it took about 5mins on my system. Wait untill you see `database system is ready to accept connections`)
+    - To seed sqlite database - use `yarn seed-sqlite`
 - Keep the database running, open a new terminal to run the scripts
+
+For PostgreSQL tests
 - Run the single query script with `yarn tsx src/pg/single.ts <count>` (example: `yarn tsx src/pg/single.ts 100`)
 - Run the multiple queries script with `yarn tsx src/pg/multiple.ts <count>` (example: `yarn tsx src/pg/multiple.ts 100`)
 - Run the orchid queries script with `yarn tsx src/pg/orchid.ts <count>` (example: `yarn tsx src/pg/orchid.ts 100`)
+
+For MySQL tests
+- Run the single query script with `yarn tsx src/mysql/single.ts <count>` (example: `yarn tsx src/mysql/single.ts 100`)
+- Run the multiple queries script with `yarn tsx src/mysql/multiple.ts <count>` (example: `yarn tsx src/mysql/multiple.ts 100`)
+
+For SQLite tests
+- Run the single query script with `yarn tsx src/sqlite/single.ts <count>` (example: `yarn tsx src/sqlite/single.ts 100`)
+- Run the multiple queries script with `yarn tsx src/sqlite/multiple.ts <count>` (example: `yarn tsx src/sqlite/multiple.ts 100`)
 
 The two scripts write the loaded data into the files `single.json`, `multiple.json`, and `orchid.json` respectively, so you can inspect the files and check that they fetch the same data.
 
