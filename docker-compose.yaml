@@ -1,6 +1,6 @@
 version: '3'
 services:
-  db:
+  pg:
     image: postgres
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
     environment:
@@ -11,5 +11,15 @@ services:
       - '5432:5432'
     volumes:
       - ./docker/postgres.conf:/etc/postgresql/postgresql.conf
-      - ./docker/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./docker/schema-pg.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./docker/seed.sql:/docker-entrypoint-initdb.d/2-seed.sql
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: benchmark
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./docker/schema-mysql.sql:/docker-entrypoint-initdb.d/1-schema.sql
       - ./docker/seed.sql:/docker-entrypoint-initdb.d/2-seed.sql
