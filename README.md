@@ -80,7 +80,7 @@ Here are the results of running the scripts with different counts multiple times
   </tbody>
 </table>
 
-## The results compared to Orchid ORM by [@romeerez](https://github.com/romeerez) (before Drizzle ORM v0.27.3)
+## The results compared to Orchid ORM by [@romeerez](https://github.com/romeerez) (before Drizzle ORM v0.28.0)
 
 Here are the results compared to [Orchid ORM](https://github.com/romeerez/orchid-orm).
 
@@ -121,7 +121,7 @@ Here are the results compared to [Orchid ORM](https://github.com/romeerez/orchid
   </tbody>
 </table>
 
-## The results (Drizzle ORM v0.27.3+)
+## The results (Drizzle ORM v0.28.0+)
 
 ### PostgreSQL
 
@@ -230,11 +230,7 @@ Here are the results compared to [Orchid ORM](https://github.com/romeerez/orchid
   </tbody>
 </table>
 
-## The Why (by [@romeerez](https://github.com/romeerez))
-
-Each variant is spending time executing the query, and then on JS side processing results.
-
-### Drizzle (v0.27.3+)
+### Drizzle (v0.28.0+)
 
 SQL produced by Drizzle:
 
@@ -324,7 +320,7 @@ order by "comments"."id"
 limit 1
 ```
 
-### Drizzle (before v0.27.3)
+### Drizzle (before v0.28.0)
 
 SQL produced by Drizzle:
 
@@ -375,66 +371,6 @@ FROM
             "comments"."user") "comments"
 LIMIT 1
 ```
-
-It does a lot of heavy stuff (run EXPLAIN ANALYZE **query**):
-
-- `GroupAggregate`: see various `GROUP BY` statements in the SQL, it's a heavy operation
-- `Incremental Sort`: there is no explicit `ORDER BY` in the SQL, but looks like it's done automatically by Postgres to make the `GROUP BY` properly.
-- `CASE ... WHEN ... END`: it appears as the `Sort Key` in the `Incremental Sort`, I believe that this logic cannot be optimized by Postgres, especially the `count(comments_user.id)` - Postgres will have to calculate it in the loops for each comment.
-- And a lot of other things
-
-Drizzle is packing relation data into JSON arrays, so that the comment user and post are returned from db as arrays of values, and it is unpacking it back to JSON objects on JS side.
-It's a nice optimization by the way, it is minimizing the transfer size between db and app.
-
-Time spent on the query itself, when executing it separately, is roughly equal to the benchmarked time, so we can say that on JS side Drizzle doesn't do anything heavy to cause performance issues.
-
-### Multiple queries
-
-Joins are done on JS side, and simple three queries are executed:
-
-- load comments
-- load users by ids from `comment.user_id`
-- load posts by ids from `comment.post_id`
-
-And then JS is combining them together.
-
-It's approximately how Prisma works under the hood, which also loads relations in separate queries.
-But at least Prisma's engine is in Rust, which will process this faster with lower memory consumption and won't block the event loop.
-
-IMO, it's not a big deal anyway, we usually load records in small batches such as 100 records at a time maximum, and JS can handle joins at such scales smoothly and easily.
-
-A downside of this approach is increased round-trips between the db and the app, which will be noticeable when db is hosted in a separate cloud than the app.
-
-### Orchid ORM
-
-SQL produced by Orchid ORM:
-
-```sql
-SELECT "comments".*,
-       row_to_json("user".*) "user",
-       row_to_json("post".*) "post"
-FROM "comments"
-LEFT JOIN LATERAL
-  (SELECT "user"."name"
-   FROM "users" AS "user"
-   WHERE "user"."id" = "comments"."user_id") "user" ON TRUE
-LEFT JOIN LATERAL
-  (SELECT "post"."title",
-          row_to_json("user2".*) "user"
-   FROM "posts" AS "post"
-   LEFT JOIN LATERAL
-     (SELECT "user"."name"
-      FROM "users" AS "user"
-      WHERE "user"."id" = "post"."user_id") "user2" ON TRUE
-   WHERE "post"."id" = "comments"."post_id") "post" ON TRUE
-LIMIT 1
-```
-
-It is much simpler, and it performs fewer things compared to Drizzle.
-It also performs `LEFT JOIN`s, but these are `LATERAL` joins which I found to be the most efficient way of loading relations, while them being flexible enough to suit different cases.
-
-Unlike Drizzle, it doesn't do packing to JSON arrays and then unpacking back to objects on JS side, it saves some time for packing/unpacking, but it would be a nice optimization to transfer less data.
-We can't feel the transfer time here, in these benchmarks, because they are local, but they will be noticeable when hosting db on some cloud separately from the app.
 
 ## Run the benchmark yourself
 
