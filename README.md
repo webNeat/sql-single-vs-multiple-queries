@@ -241,20 +241,29 @@ SQL produced by Drizzle:
 #### PostgreSQL
 
 ```sql
-select "id", "user_id", "post_id", "content", "user", "post"
-from (select "comments".*, "comments_user"."data" as "user", "comments_post"."data" as "post"
-      from "comments"
-               left join lateral (select json_build_array("comments_user"."name") as "data"
+select "comments"."id",
+       "comments"."user_id",
+       "comments"."post_id",
+       "comments"."content",
+       "comments_user"."data" as "user",
+       "comments_post"."data" as "post"
+from "comments"
+         left join lateral (select json_build_array("comments_user"."name") as "data"
+                            from (select *
                                   from "users" "comments_user"
-                                  where "comments_user"."id" = "comments"."user_id") "comments_user" on true
-               left join lateral (select json_build_array("comments_post"."title",
-                                                          "comments_post_user"."data") as "data"
+                                  where "comments_user"."id" = "comments"."user_id"
+                                  limit 1) "comments_user") "comments_user" on true
+         left join lateral (select json_build_array("comments_post"."title", "comments_post_user"."data") as "data"
+                            from (select *
                                   from "posts" "comments_post"
-                                           left join lateral (select json_build_array("comments_post_user"."name") as "data"
+                                  where "comments_post"."id" = "comments"."post_id"
+                                  limit 1) "comments_post"
+                                     left join lateral (select json_build_array("comments_post_user"."name") as "data"
+                                                        from (select *
                                                               from "users" "comments_post_user"
-                                                              where "comments_post_user"."id" = "comments_post"."user_id") "comments_post_user"
-                                                     on true
-                                  where "comments_post"."id" = "comments"."post_id") "comments_post" on true) "comments"
+                                                              where "comments_post_user"."id" = "comments_post"."user_id"
+                                                              limit 1) "comments_post_user") "comments_post_user"
+                                               on true) "comments_post" on true
 order by "comments"."id"
 limit 1
 ```
@@ -262,19 +271,29 @@ limit 1
 #### MySQL
 
 ```sql
-select `id`, `user_id`, `post_id`, `content`, `user`, `post`
-from (select `comments`.*, `comments_user`.`data` as `user`, `comments_post`.`data` as `post`
-      from `comments`
-               left join lateral (select json_array(`comments_user`.`name`) as `data`
+select `comments`.`id`,
+       `comments`.`user_id`,
+       `comments`.`post_id`,
+       `comments`.`content`,
+       `comments_user`.`data` as `user`,
+       `comments_post`.`data` as `post`
+from `comments`
+         left join lateral (select json_array(`comments_user`.`name`) as `data`
+                            from (select *
                                   from `users` `comments_user`
-                                  where `comments_user`.`id` = `comments`.`user_id`) `comments_user` on true
-               left join lateral (select json_array(`comments_post`.`title`, `comments_post_user`.`data`) as `data`
+                                  where `comments_user`.`id` = `comments`.`user_id`
+                                  limit 1) `comments_user`) `comments_user` on true
+         left join lateral (select json_array(`comments_post`.`title`, `comments_post_user`.`data`) as `data`
+                            from (select *
                                   from `posts` `comments_post`
-                                           left join lateral (select json_array(`comments_post_user`.`name`) as `data`
+                                  where `comments_post`.`id` = `comments`.`post_id`
+                                  limit 1) `comments_post`
+                                     left join lateral (select json_array(`comments_post_user`.`name`) as `data`
+                                                        from (select *
                                                               from `users` `comments_post_user`
-                                                              where `comments_post_user`.`id` = `comments_post`.`user_id`) `comments_post_user`
-                                                     on true
-                                  where `comments_post`.`id` = `comments`.`post_id`) `comments_post` on true) `comments`
+                                                              where `comments_post_user`.`id` = `comments_post`.`user_id`
+                                                              limit 1) `comments_post_user`) `comments_post_user`
+                                               on true) `comments_post` on true
 order by `comments`.`id`
 limit 1
 ```
@@ -282,17 +301,25 @@ limit 1
 #### SQLite
 
 ```sql
-select "id", "user_id", "post_id", "content", "user", "post"
-from (select "comments".*,
-             (select json_array("name") as "data"
+select "id",
+       "user_id",
+       "post_id",
+       "content",
+       (select json_array("name") as "data"
+        from (select *
               from "users" "comments_user"
-              where "comments_user"."id" = "comments"."user_id") as "user",
-             (select json_array("title", (select json_array("name") as "data"
+              where "comments_user"."id" = "comments"."user_id"
+              limit 1) "comments_user") as "user",
+       (select json_array("title", (select json_array("name") as "data"
+                                    from (select *
                                           from "users" "comments_post_user"
-                                          where "comments_post_user"."id" = "comments_post"."user_id")) as "data"
+                                          where "comments_post_user"."id" = "comments_post"."user_id"
+                                          limit 1) "comments_post_user")) as "data"
+        from (select *
               from "posts" "comments_post"
-              where "comments_post"."id" = "comments"."post_id") as "post"
-      from "comments") "comments"
+              where "comments_post"."id" = "comments"."post_id"
+              limit 1) "comments_post") as "post"
+from "comments"
 order by "comments"."id"
 limit 1
 ```
