@@ -10,7 +10,7 @@ So I created this benchmark to experiment with Drizzle a bit and see what I am u
 
 ## The benchmark
 
-- I used Postgres inside a docker container
+- I used **Postgres** inside a docker container
 - I created a simple blog database
 
 ```
@@ -41,14 +41,15 @@ comments
 
 ## The results
 
-Here are the results of running the scripts with different counts multiple times and taking an approx average (I didn't have to be precise because the difference is huge!)
-
 <table>
   <thead>
     <tr>
       <th>count of comments</th>
-      <th>single query</th>
-      <th>multiple queries + data combinaison</th>
+      <th>single query on v0.26.5</th>
+      <th>multiple queries + combinaison on v0.26.5</th>
+      <th>single query on v0.28.0</th>
+      <th>multiple queries + combinaison on v0.28.0</th>
+      <th>single query with <a href="https://github.com/romeerez/orchid-orm">Orchid ORM</a> v1.10.5</th>
     </tr>
   </thead>
   <tbody>
@@ -56,105 +57,30 @@ Here are the results of running the scripts with different counts multiple times
       <td>1</td>
       <td>1900 ms</td>
       <td>27 ms</td>
-    </tr>
-    <tr>
-      <td>10</td>
-      <td>1900 ms</td>
-      <td>27 ms</td>
-    </tr>
-    <tr>
-      <td>100</td>
-      <td>3250 ms</td>
-      <td>30 ms</td>
-    </tr>
-    <tr>
-      <td>1000</td>
-      <td>16_000 ms</td>
-      <td>55 ms</td>
-    </tr>
-    <tr>
-      <td>5000</td>
-      <td>71_000 ms</td>
-      <td>150 ms</td>
-    </tr>
-  </tbody>
-</table>
-
-## The results compared to Orchid ORM by [@romeerez](https://github.com/romeerez) (before Drizzle ORM v0.28.0)
-
-Here are the results compared to [Orchid ORM](https://github.com/romeerez/orchid-orm).
-
-<table>
-  <thead>
-    <tr>
-      <th>count of comments</th>
-      <th>single query with Drizzle ORM</th>
-      <th>multiple queries + data combinaison</th>
-      <th>single query with Orchid ORM</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>2344 ms</td>
-      <td>26 ms</td>
-      <td>19 ms</td>
-    </tr>
-    <tr>
-      <td>100</td>
-      <td>3833 ms</td>
-      <td>30 ms</td>
-      <td>21 ms</td>
-    </tr>
-    <tr>
-      <td>1000</td>
-      <td>16328 ms</td>
-      <td>29 ms</td>
-      <td>28 ms</td>
-    </tr>
-    <tr>
-      <td>5000</td>
-      <td>79589 ms</td>
-      <td>185 ms</td>
-      <td>128 ms</td>
-    </tr>
-  </tbody>
-</table>
-
-## The results (Drizzle ORM v0.28.0+)
-
-### PostgreSQL
-
-<table>
-  <thead>
-    <tr>
-      <th>count of comments</th>
-      <th>single query with Drizzle ORM</th>
-      <th>multiple queries + data combinaison</th>
-      <th>single query with Orchid ORM</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>1</td>
       <td>11 ms</td>
       <td>17 ms</td>
       <td>12 ms</td>
     </tr>
     <tr>
       <td>100</td>
+      <td>3250 ms</td>
+      <td>30 ms</td>
       <td>13 ms</td>
       <td>21 ms</td>
       <td>13 ms</td>
     </tr>
     <tr>
       <td>1000</td>
+      <td>16_000 ms</td>
+      <td>55 ms</td>
       <td>23 ms</td>
       <td>37 ms</td>
       <td>21 ms</td>
     </tr>
     <tr>
       <td>5000</td>
+      <td>71_000 ms</td>
+      <td>150 ms</td>
       <td>57 ms</td>
       <td>120 ms</td>
       <td>50 ms</td>
@@ -162,168 +88,7 @@ Here are the results compared to [Orchid ORM](https://github.com/romeerez/orchid
   </tbody>
 </table>
 
-### MySQL
-
-<table>
-  <thead>
-    <tr>
-      <th>count of comments</th>
-      <th>single query with Drizzle ORM</th>
-      <th>multiple queries + data combinaison</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>17 ms</td>
-      <td>20 ms</td>
-    </tr>
-    <tr>
-      <td>100</td>
-      <td>18 ms</td>
-      <td>22 ms</td>
-    </tr>
-    <tr>
-      <td>1000</td>
-      <td>24 ms</td>
-      <td>35 ms</td>
-    </tr>
-    <tr>
-      <td>5000</td>
-      <td>73 ms</td>
-      <td>91 ms</td>
-    </tr>
-  </tbody>
-</table>
-
-### SQLite
-
-<table>
-  <thead>
-    <tr>
-      <th>count of comments</th>
-      <th>single query with Drizzle ORM</th>
-      <th>multiple queries + data combinaison</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>2 ms</td>
-      <td>2 ms</td>
-    </tr>
-    <tr>
-      <td>100</td>
-      <td>3 ms</td>
-      <td>4 ms</td>
-    </tr>
-    <tr>
-      <td>1000</td>
-      <td>15 ms</td>
-      <td>20 ms</td>
-    </tr>
-    <tr>
-      <td>5000</td>
-      <td>47 ms</td>
-      <td>67 ms</td>
-    </tr>
-  </tbody>
-</table>
-
-### Drizzle (v0.28.0+)
-
-SQL produced by Drizzle:
-
-#### PostgreSQL
-
-```sql
-select "comments"."id",
-       "comments"."user_id",
-       "comments"."post_id",
-       "comments"."content",
-       "comments_user"."data" as "user",
-       "comments_post"."data" as "post"
-from "comments"
-         left join lateral (select json_build_array("comments_user"."name") as "data"
-                            from (select *
-                                  from "users" "comments_user"
-                                  where "comments_user"."id" = "comments"."user_id"
-                                  limit 1) "comments_user") "comments_user" on true
-         left join lateral (select json_build_array("comments_post"."title", "comments_post_user"."data") as "data"
-                            from (select *
-                                  from "posts" "comments_post"
-                                  where "comments_post"."id" = "comments"."post_id"
-                                  limit 1) "comments_post"
-                                     left join lateral (select json_build_array("comments_post_user"."name") as "data"
-                                                        from (select *
-                                                              from "users" "comments_post_user"
-                                                              where "comments_post_user"."id" = "comments_post"."user_id"
-                                                              limit 1) "comments_post_user") "comments_post_user"
-                                               on true) "comments_post" on true
-order by "comments"."id"
-limit 1
-```
-
-#### MySQL
-
-```sql
-select `comments`.`id`,
-       `comments`.`user_id`,
-       `comments`.`post_id`,
-       `comments`.`content`,
-       `comments_user`.`data` as `user`,
-       `comments_post`.`data` as `post`
-from `comments`
-         left join lateral (select json_array(`comments_user`.`name`) as `data`
-                            from (select *
-                                  from `users` `comments_user`
-                                  where `comments_user`.`id` = `comments`.`user_id`
-                                  limit 1) `comments_user`) `comments_user` on true
-         left join lateral (select json_array(`comments_post`.`title`, `comments_post_user`.`data`) as `data`
-                            from (select *
-                                  from `posts` `comments_post`
-                                  where `comments_post`.`id` = `comments`.`post_id`
-                                  limit 1) `comments_post`
-                                     left join lateral (select json_array(`comments_post_user`.`name`) as `data`
-                                                        from (select *
-                                                              from `users` `comments_post_user`
-                                                              where `comments_post_user`.`id` = `comments_post`.`user_id`
-                                                              limit 1) `comments_post_user`) `comments_post_user`
-                                               on true) `comments_post` on true
-order by `comments`.`id`
-limit 1
-```
-
-#### SQLite
-
-```sql
-select "id",
-       "user_id",
-       "post_id",
-       "content",
-       (select json_array("name") as "data"
-        from (select *
-              from "users" "comments_user"
-              where "comments_user"."id" = "comments"."user_id"
-              limit 1) "comments_user") as "user",
-       (select json_array("title", (select json_array("name") as "data"
-                                    from (select *
-                                          from "users" "comments_post_user"
-                                          where "comments_post_user"."id" = "comments_post"."user_id"
-                                          limit 1) "comments_post_user")) as "data"
-        from (select *
-              from "posts" "comments_post"
-              where "comments_post"."id" = "comments"."post_id"
-              limit 1) "comments_post") as "post"
-from "comments"
-order by "comments"."id"
-limit 1
-```
-
-### Drizzle (before v0.28.0)
-
-SQL produced by Drizzle:
-
+SQL produced by **Drizzle ORM v0.26.5**
 ```sql
 SELECT "id",
        "user_id",
@@ -370,6 +135,180 @@ FROM
             "comments"."content",
             "comments"."user") "comments"
 LIMIT 1
+```
+
+SQL produced by **Drizzle ORM v0.28.0**
+```sql
+select "comments"."id",
+  "comments"."user_id",
+  "comments"."post_id",
+  "comments"."content",
+  "comments_user"."data" as "user",
+  "comments_post"."data" as "post"
+from "comments"
+left join lateral (select json_build_array("comments_user"."name")   as "data"
+from (select *
+    from "users" "comments_user"
+    where "comments_user"."id" = "comments"."user_id"
+    limit 1) "comments_user") "comments_user" on true
+left join lateral (select json_build_array("comments_post"."title", "comments_post_user"."data") as "data"
+from (select *
+    from "posts" "comments_post"
+    where "comments_post"."id" = "comments"."post_id"
+    limit 1) "comments_post"
+        left join lateral (select json_build_array("comments_post_user"."name") as "data"
+            from (select *
+                from "users" "comments_post_user"
+                where "comments_post_user"."id" = "comments_post"."user_id"
+                limit 1) "comments_post_user") "comments_post_user"
+        on true) "comments_post" on true
+order by "comments"."id"
+limit 1
+```
+
+SQL produced by **Orchid ORM v1.10.5**
+```sql
+SELECT "comments".*,
+       row_to_json("user".*) "user",
+       row_to_json("post".*) "post"
+FROM "comments"
+LEFT JOIN LATERAL
+  (SELECT "user"."name"
+   FROM "users" AS "user"
+   WHERE "user"."id" = "comments"."user_id") "user" ON TRUE
+LEFT JOIN LATERAL
+  (SELECT "post"."title",
+          row_to_json("user2".*) "user"
+   FROM "posts" AS "post"
+   LEFT JOIN LATERAL
+     (SELECT "user"."name"
+      FROM "users" AS "user"
+      WHERE "user"."id" = "post"."user_id") "user2" ON TRUE
+   WHERE "post"."id" = "comments"."post_id") "post" ON TRUE
+LIMIT 1
+```
+
+### Results for MySQL
+
+<table>
+  <thead>
+    <tr>
+      <th>count of comments</th>
+      <th>single query with Drizzle ORM on v0.28.0</th>
+      <th>multiple queries + data combinaison on v0.28.0</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>17 ms</td>
+      <td>20 ms</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>18 ms</td>
+      <td>22 ms</td>
+    </tr>
+    <tr>
+      <td>1000</td>
+      <td>24 ms</td>
+      <td>35 ms</td>
+    </tr>
+    <tr>
+      <td>5000</td>
+      <td>73 ms</td>
+      <td>91 ms</td>
+    </tr>
+  </tbody>
+</table>
+
+SQL produced by Drizzle ORM v0.28.0
+```sql
+select `comments`.`id`,
+    `comments`.`user_id`,
+    `comments`.`post_id`,
+    `comments`.`content`,
+    `comments_user`.`data` as `user`,
+    `comments_post`.`data` as `post`
+from `comments`
+    left join lateral (select json_array(`comments_user`.`name`) as `data`
+      from (select *
+            from `users` `comments_user`
+            where `comments_user`.`id` = `comments`.`user_id`
+            limit 1) `comments_user`) `comments_user` on true
+    left join lateral (select json_array(`comments_post`.`title`, `comments_post_user`.`data`) as `data`
+      from (select *
+          from `posts` `comments_post`
+          where `comments_post`.`id` = `comments`.`post_id`
+          limit 1) `comments_post`
+              left join lateral (select json_array(`comments_post_user`.`name`) as `data`
+                  from (select *
+                      from `users` `comments_post_user`
+                      where `comments_post_user`.`id` = `comments_post`.`user_id`
+                      limit 1) `comments_post_user`) `comments_post_user`
+              on true) `comments_post` on true
+order by `comments`.`id`
+limit 1
+```
+
+### Results for SQLite
+
+<table>
+  <thead>
+    <tr>
+      <th>count of comments</th>
+      <th>single query with Drizzle ORM v0.28.0</th>
+      <th>multiple queries + data combinaison on v0.28.0</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>2 ms</td>
+      <td>2 ms</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>3 ms</td>
+      <td>4 ms</td>
+    </tr>
+    <tr>
+      <td>1000</td>
+      <td>15 ms</td>
+      <td>20 ms</td>
+    </tr>
+    <tr>
+      <td>5000</td>
+      <td>47 ms</td>
+      <td>67 ms</td>
+    </tr>
+  </tbody>
+</table>
+
+SQL produced by Drizzle ORM v0.28.0:
+
+```sql
+select "id",
+       "user_id",
+       "post_id",
+       "content",
+       (select json_array("name") as "data"
+        from (select *
+              from "users" "comments_user"
+              where "comments_user"."id" = "comments"."user_id"
+              limit 1) "comments_user") as "user",
+       (select json_array("title", (select json_array("name") as "data"
+                                    from (select *
+                                          from "users" "comments_post_user"
+                                          where "comments_post_user"."id" = "comments_post"."user_id"
+                                          limit 1) "comments_post_user")) as "data"
+        from (select *
+              from "posts" "comments_post"
+              where "comments_post"."id" = "comments"."post_id"
+              limit 1) "comments_post") as "post"
+from "comments"
+order by "comments"."id"
+limit 1
 ```
 
 ## Run the benchmark yourself
