@@ -5,3 +5,4 @@ docker/seed.sql
 single.json
 multiple.json
 orchid.json
+db.sqlite

@@ -6,17 +6,21 @@
   "scripts": {
     "start-db": "docker-compose up",
     "stop-db": "docker-compose down -v",
-    "generate-seed": "tsx src/seed/run.ts"
+    "generate-seed": "tsx src/seed/run.ts",
+    "seed-sqlite": "cat docker/schema-sqlite.sql | sqlite3 db.sqlite && cat docker/seed.sql | sqlite3 db.sqlite"
   },
   "dependencies": {
     "@types/node": "^20.2.5",
-    "drizzle-orm": "^0.26.5",
+    "better-sqlite3": "^8.4.0",
+    "drizzle-orm": "^0.28.0",
+    "mysql2": "^3.5.1",
     "orchid-orm": "^1.10.5",
     "postgres": "^3.3.5",
     "prettier": "^2.8.8",
     "tsx": "^3.12.7"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.4",
     "drizzle-kit": "^0.18.1",
     "typescript": "^5.1.3"
   }

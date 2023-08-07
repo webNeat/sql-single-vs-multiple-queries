@@ -12,6 +12,7 @@ So I created this benchmark to experiment with Drizzle a bit and see what I am u
 
 - I used Postgres inside a docker container
 - I created a simple blog database
+
 ```
 users
   id int primary key auto-increment
@@ -31,6 +32,7 @@ comments
   post_id int foreign key (posts.id)
   content text
 ```
+
 - I inserted a lot of data into the database: 100k users, 500k posts and 5M comments
 - I wrote two scripts to fetch the same data: **a number of comments with their author name, post title and post author name**. The count of comments to fetch is given as a parameter to the script.
   - The first script `src/single.ts` uses Drizzle `db.query...` to fetch all the data using a single query.
@@ -78,7 +80,7 @@ Here are the results of running the scripts with different counts multiple times
   </tbody>
 </table>
 
-## The results compared to Orchid ORM (by [@romeerez](https://github.com/romeerez))
+## The results compared to Orchid ORM by [@romeerez](https://github.com/romeerez) (before Drizzle ORM v0.28.0)
 
 Here are the results compared to [Orchid ORM](https://github.com/romeerez/orchid-orm).
 
@@ -119,11 +121,206 @@ Here are the results compared to [Orchid ORM](https://github.com/romeerez/orchid
   </tbody>
 </table>
 
-## The Why (by [@romeerez](https://github.com/romeerez))
+## The results (Drizzle ORM v0.28.0+)
 
-Each variant is spending time executing the query, and then on JS side processing results.
+### PostgreSQL
 
-### Drizzle
+<table>
+  <thead>
+    <tr>
+      <th>count of comments</th>
+      <th>single query with Drizzle ORM</th>
+      <th>multiple queries + data combinaison</th>
+      <th>single query with Orchid ORM</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>11 ms</td>
+      <td>17 ms</td>
+      <td>12 ms</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>13 ms</td>
+      <td>21 ms</td>
+      <td>13 ms</td>
+    </tr>
+    <tr>
+      <td>1000</td>
+      <td>23 ms</td>
+      <td>37 ms</td>
+      <td>21 ms</td>
+    </tr>
+    <tr>
+      <td>5000</td>
+      <td>57 ms</td>
+      <td>120 ms</td>
+      <td>50 ms</td>
+    </tr>
+  </tbody>
+</table>
+
+### MySQL
+
+<table>
+  <thead>
+    <tr>
+      <th>count of comments</th>
+      <th>single query with Drizzle ORM</th>
+      <th>multiple queries + data combinaison</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>17 ms</td>
+      <td>20 ms</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>18 ms</td>
+      <td>22 ms</td>
+    </tr>
+    <tr>
+      <td>1000</td>
+      <td>24 ms</td>
+      <td>35 ms</td>
+    </tr>
+    <tr>
+      <td>5000</td>
+      <td>73 ms</td>
+      <td>91 ms</td>
+    </tr>
+  </tbody>
+</table>
+
+### SQLite
+
+<table>
+  <thead>
+    <tr>
+      <th>count of comments</th>
+      <th>single query with Drizzle ORM</th>
+      <th>multiple queries + data combinaison</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>2 ms</td>
+      <td>2 ms</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>3 ms</td>
+      <td>4 ms</td>
+    </tr>
+    <tr>
+      <td>1000</td>
+      <td>15 ms</td>
+      <td>20 ms</td>
+    </tr>
+    <tr>
+      <td>5000</td>
+      <td>47 ms</td>
+      <td>67 ms</td>
+    </tr>
+  </tbody>
+</table>
+
+### Drizzle (v0.28.0+)
+
+SQL produced by Drizzle:
+
+#### PostgreSQL
+
+```sql
+select "comments"."id",
+       "comments"."user_id",
+       "comments"."post_id",
+       "comments"."content",
+       "comments_user"."data" as "user",
+       "comments_post"."data" as "post"
+from "comments"
+         left join lateral (select json_build_array("comments_user"."name") as "data"
+                            from (select *
+                                  from "users" "comments_user"
+                                  where "comments_user"."id" = "comments"."user_id"
+                                  limit 1) "comments_user") "comments_user" on true
+         left join lateral (select json_build_array("comments_post"."title", "comments_post_user"."data") as "data"
+                            from (select *
+                                  from "posts" "comments_post"
+                                  where "comments_post"."id" = "comments"."post_id"
+                                  limit 1) "comments_post"
+                                     left join lateral (select json_build_array("comments_post_user"."name") as "data"
+                                                        from (select *
+                                                              from "users" "comments_post_user"
+                                                              where "comments_post_user"."id" = "comments_post"."user_id"
+                                                              limit 1) "comments_post_user") "comments_post_user"
+                                               on true) "comments_post" on true
+order by "comments"."id"
+limit 1
+```
+
+#### MySQL
+
+```sql
+select `comments`.`id`,
+       `comments`.`user_id`,
+       `comments`.`post_id`,
+       `comments`.`content`,
+       `comments_user`.`data` as `user`,
+       `comments_post`.`data` as `post`
+from `comments`
+         left join lateral (select json_array(`comments_user`.`name`) as `data`
+                            from (select *
+                                  from `users` `comments_user`
+                                  where `comments_user`.`id` = `comments`.`user_id`
+                                  limit 1) `comments_user`) `comments_user` on true
+         left join lateral (select json_array(`comments_post`.`title`, `comments_post_user`.`data`) as `data`
+                            from (select *
+                                  from `posts` `comments_post`
+                                  where `comments_post`.`id` = `comments`.`post_id`
+                                  limit 1) `comments_post`
+                                     left join lateral (select json_array(`comments_post_user`.`name`) as `data`
+                                                        from (select *
+                                                              from `users` `comments_post_user`
+                                                              where `comments_post_user`.`id` = `comments_post`.`user_id`
+                                                              limit 1) `comments_post_user`) `comments_post_user`
+                                               on true) `comments_post` on true
+order by `comments`.`id`
+limit 1
+```
+
+#### SQLite
+
+```sql
+select "id",
+       "user_id",
+       "post_id",
+       "content",
+       (select json_array("name") as "data"
+        from (select *
+              from "users" "comments_user"
+              where "comments_user"."id" = "comments"."user_id"
+              limit 1) "comments_user") as "user",
+       (select json_array("title", (select json_array("name") as "data"
+                                    from (select *
+                                          from "users" "comments_post_user"
+                                          where "comments_post_user"."id" = "comments_post"."user_id"
+                                          limit 1) "comments_post_user")) as "data"
+        from (select *
+              from "posts" "comments_post"
+              where "comments_post"."id" = "comments"."post_id"
+              limit 1) "comments_post") as "post"
+from "comments"
+order by "comments"."id"
+limit 1
+```
+
+### Drizzle (before v0.28.0)
 
 SQL produced by Drizzle:
 
@@ -175,64 +372,6 @@ FROM
 LIMIT 1
 ```
 
-It does a lot of heavy stuff (run EXPLAIN ANALYZE **query**):
-- `GroupAggregate`: see various `GROUP BY` statements in the SQL, it's a heavy operation
-- `Incremental Sort`: there is no explicit `ORDER BY` in the SQL, but looks like it's done automatically by Postgres to make the `GROUP BY` properly.
-- `CASE ... WHEN ... END`: it appears as the `Sort Key` in the `Incremental Sort`, I believe that this logic cannot be optimized by Postgres, especially the `count(comments_user.id)` - Postgres will have to calculate it in the loops for each comment.
-- And a lot of other things
-
-Drizzle is packing relation data into JSON arrays, so that the comment user and post are returned from db as arrays of values, and it is unpacking it back to JSON objects on JS side.
-It's a nice optimization by the way, it is minimizing the transfer size between db and app.
-
-Time spent on the query itself, when executing it separately, is roughly equal to the benchmarked time, so we can say that on JS side Drizzle doesn't do anything heavy to cause performance issues.
-
-### Multiple queries
-
-Joins are done on JS side, and simple three queries are executed:
-- load comments
-- load users by ids from `comment.user_id`
-- load posts by ids from `comment.post_id`
-
-And then JS is combining them together.
-
-It's approximately how Prisma works under the hood, which also loads relations in separate queries.
-But at least Prisma's engine is in Rust, which will process this faster with lower memory consumption and won't block the event loop.
-
-IMO, it's not a big deal anyway, we usually load records in small batches such as 100 records at a time maximum, and JS can handle joins at such scales smoothly and easily.
-
-A downside of this approach is increased round-trips between the db and the app, which will be noticeable when db is hosted in a separate cloud than the app.
-
-### Orchid ORM
-
-SQL produced by Orchid ORM:
-
-```sql
-SELECT "comments".*,
-       row_to_json("user".*) "user",
-       row_to_json("post".*) "post"
-FROM "comments"
-LEFT JOIN LATERAL
-  (SELECT "user"."name"
-   FROM "users" AS "user"
-   WHERE "user"."id" = "comments"."user_id") "user" ON TRUE
-LEFT JOIN LATERAL
-  (SELECT "post"."title",
-          row_to_json("user2".*) "user"
-   FROM "posts" AS "post"
-   LEFT JOIN LATERAL
-     (SELECT "user"."name"
-      FROM "users" AS "user"
-      WHERE "user"."id" = "post"."user_id") "user2" ON TRUE
-   WHERE "post"."id" = "comments"."post_id") "post" ON TRUE
-LIMIT 1
-```
-
-It is much simpler, and it performs fewer things compared to Drizzle.
-It also performs `LEFT JOIN`s, but these are `LATERAL` joins which I found to be the most efficient way of loading relations, while them being flexible enough to suit different cases.
-
-Unlike Drizzle, it doesn't do packing to JSON arrays and then unpacking back to objects on JS side, it saves some time for packing/unpacking, but it would be a nice optimization to transfer less data.
-We can't feel the transfer time here, in these benchmarks, because they are local, but they will be noticeable when hosting db on some cloud separately from the app.
-
 ## Run the benchmark yourself
 
 **Requirements:** You will need to have [docker-compose](https://docs.docker.com/compose/) and Nodejs installed on your system.
@@ -243,10 +382,21 @@ Then follow these steps:
 - Install dependencies `yarn install`
 - Generate the SQL file that inserts data into the database `yarn generate-seed` (You can change the amount of data to generate by changing the `counts` variable in `src/seed/generators.ts`)
 - Start the database `yarn start-db` (This will take some time to insert all the data, it took about 5mins on my system. Wait untill you see `database system is ready to accept connections`)
+    - To seed sqlite database - use `yarn seed-sqlite`
 - Keep the database running, open a new terminal to run the scripts
-- Run the single query script with `yarn tsx src/single.ts <count>` (example: `yarn tsx src/single.ts 100`)
-- Run the multiple queries script with `yarn tsx src/multiple.ts <count>` (example: `yarn tsx src/multiple.ts 100`)
-- Run the orchid queries script with `yarn tsx src/orchid.ts <count>` (example: `yarn tsx src/orchid.ts 100`)
+
+For PostgreSQL tests
+- Run the single query script with `yarn tsx src/pg/single.ts <count>` (example: `yarn tsx src/pg/single.ts 100`)
+- Run the multiple queries script with `yarn tsx src/pg/multiple.ts <count>` (example: `yarn tsx src/pg/multiple.ts 100`)
+- Run the orchid queries script with `yarn tsx src/pg/orchid.ts <count>` (example: `yarn tsx src/pg/orchid.ts 100`)
+
+For MySQL tests
+- Run the single query script with `yarn tsx src/mysql/single.ts <count>` (example: `yarn tsx src/mysql/single.ts 100`)
+- Run the multiple queries script with `yarn tsx src/mysql/multiple.ts <count>` (example: `yarn tsx src/mysql/multiple.ts 100`)
+
+For SQLite tests
+- Run the single query script with `yarn tsx src/sqlite/single.ts <count>` (example: `yarn tsx src/sqlite/single.ts 100`)
+- Run the multiple queries script with `yarn tsx src/sqlite/multiple.ts <count>` (example: `yarn tsx src/sqlite/multiple.ts 100`)
 
 The two scripts write the loaded data into the files `single.json`, `multiple.json`, and `orchid.json` respectively, so you can inspect the files and check that they fetch the same data.
 

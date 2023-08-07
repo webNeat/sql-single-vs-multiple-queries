@@ -1,5 +1,5 @@
 import { inArray } from 'drizzle-orm'
-import { db, posts, sql, users } from './database'
+import { comments, db, posts, pool, users } from './database'
 import { writeFile } from 'fs/promises'
 
 async function main() {
@@ -8,7 +8,7 @@ async function main() {
 
   const start = performance.now()
 
-  const items = await db.query.comments.findMany({ limit })
+  const items = await db.query.comments.findMany({ limit, orderBy: comments.id })
 
   const userIdIndex: Record<number, number[]> = createIndex(items, 'user_id')
   const postIdIndex: Record<number, number[]> = createIndex(items, 'post_id')
@@ -27,13 +27,6 @@ async function main() {
     }),
   ])
 
-  for (const post of postsList) {
-    const { id, ...value } = post
-    for (const i of postIdIndex[id]) {
-      ;(items as any)[i].post = value
-    }
-  }
-
   for (const user of usersList) {
     const { id, ...value } = user
     for (const i of userIdIndex[id]) {
@@ -41,11 +34,18 @@ async function main() {
     }
   }
 
+  for (const post of postsList) {
+    const { id, ...value } = post
+    for (const i of postIdIndex[id]) {
+      ;(items as any)[i].post = value
+    }
+  }
+
   const end = performance.now()
   console.log(`Took ${Math.floor(end - start)}ms`)
   await writeFile('multiple.json', JSON.stringify(items))
   console.log(`Result written to multiple.json file`)
-  await sql.end()
+  await pool.end()
 }
 main().catch(console.error)
 

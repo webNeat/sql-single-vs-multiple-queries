@@ -1,5 +1,6 @@
 import { createBaseTable, orchidORM } from 'orchid-orm'
 import { writeFile } from 'fs/promises'
+import util from 'node:util';
 
 const BaseTable = createBaseTable({
   columnTypes: (t) => ({
@@ -20,6 +21,10 @@ class UserTable extends BaseTable {
 
   relations = {
     posts: this.hasMany(() => PostTable, {
+      primaryKey: 'id',
+      foreignKey: 'user_id',
+    }),
+    comments: this.hasMany(() => CommentTable, {
       primaryKey: 'id',
       foreignKey: 'user_id',
     }),
@@ -73,7 +78,7 @@ class CommentTable extends BaseTable {
 const db = orchidORM(
   {
     databaseURL: 'postgres://user:pass@localhost:5432/benchmark',
-    log: false,
+    log: true,
   },
   {
     user: UserTable,
@@ -96,10 +101,12 @@ async function main() {
           user: (q) => q.user.select('name'),
         }),
     })
+    .order('id')
     .limit(limit)
 
   const end = performance.now()
   console.log(`Took ${Math.floor(end - start)}ms`)
+  // console.log(util.inspect(items, { depth: null, colors: true }));
   await writeFile('orchid.json', JSON.stringify(items))
   console.log(`Result written to orchid.json file`)
   await db.$close()
