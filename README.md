@@ -46,9 +46,9 @@ comments
     <tr>
       <th>count of comments</th>
       <th>single query on v0.26.5</th>
-      <th>multiple queries + combinaison on v0.26.5</th>
+      <th>multiple queries + combination on v0.26.5</th>
       <th>single query on v0.28.0</th>
-      <th>multiple queries + combinaison on v0.28.0</th>
+      <th>multiple queries + combination on v0.28.0</th>
       <th>single query with <a href="https://github.com/romeerez/orchid-orm">Orchid ORM</a> v1.10.5</th>
     </tr>
   </thead>
@@ -195,7 +195,7 @@ LIMIT 1
     <tr>
       <th>count of comments</th>
       <th>single query with Drizzle ORM on v0.28.0</th>
-      <th>multiple queries + data combinaison on v0.28.0</th>
+      <th>multiple queries + data combination on v0.28.0</th>
     </tr>
   </thead>
   <tbody>
@@ -258,7 +258,7 @@ limit 1
     <tr>
       <th>count of comments</th>
       <th>single query with Drizzle ORM v0.28.0</th>
-      <th>multiple queries + data combinaison on v0.28.0</th>
+      <th>multiple queries + data combination on v0.28.0</th>
     </tr>
   </thead>
   <tbody>
